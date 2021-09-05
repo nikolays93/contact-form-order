@@ -1,0 +1,25 @@
+{
+  "require": {
+    "nikolays93/wp-admin-form": "dev-master",
+    "nikolays93/wp-admin-page": "dev-master",
+    "nikolays93/wp-admin-table": "dev-master"
+  },
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/nikolays93/wp-admin-form"
+    },
+    {
+      "type": "git",
+      "url": "https://github.com/nikolays93/wp-admin-page"
+    },
+    {
+      "type": "git",
+      "url": "https://github.com/nikolays93/wp-admin-table"
+    }
+  ],
+  "require-dev": {
+    "squizlabs/php_codesniffer": "3.*",
+    "wp-coding-standards/wpcs": "2.*"
+  }
+}
