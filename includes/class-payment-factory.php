@@ -1,14 +1,16 @@
 <?php
 
+namespace NikolayS93\PluginName;
+
 class Payment_Factory
 {
-    public static function getPaymentMethodByType(string $type): PaymentMethod
+    public static function getPaymentMethodByType(string $type): Payment_Method
     {
         switch ($type) {
             case "cc":
                 return new CreditCardPayment();
             case "paypal":
-                return new PayPalPayment();
+                return new Paypal_Payment();
             default:
                 throw new \Exception("Unknown Payment Method");
         }
@@ -18,8 +20,8 @@ class Payment_Factory
      * @param  array  $args [description]
      * @return [type]       [description]
      */
-    public static function getPaymentMethod(Order $order): PaymentMethod
+    public static function getPaymentMethod(Order $order): Payment_Method
     {
-        return self::getPaymentMethodByType($order->type);
+        return self::getPaymentMethodByType($order->payment_type);
     }
 }

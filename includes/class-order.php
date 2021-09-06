@@ -1,5 +1,7 @@
 <?php
 
+namespace NikolayS93\PluginName;
+
 class Order
 {
     const STATUS_INIT = 'new';
@@ -15,7 +17,7 @@ class Order
      * @param int|string $orderId
      * @return mixed
      */
-    public static function get(int|string $orderId = null)
+    public static function get($orderId = null)
     {
 
         if (is_string($orderId)) {
@@ -35,14 +37,11 @@ class Order
      */
     public function __construct(array $attributes)
     {
-        $this->id = count(static::$orders);
         $this->status = self::STATUS_INIT;
 
         foreach ($attributes as $key => $value) {
             $this->{$key} = $value;
         }
-
-        static::$orders[$this->id] = $this;
     }
 
     public function complete(): void

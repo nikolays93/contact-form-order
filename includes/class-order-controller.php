@@ -1,5 +1,7 @@
 <?php
 
+namespace NikolayS93\PluginName;
+
 class Order_Controller
 {
     /**
@@ -13,31 +15,25 @@ class Order_Controller
         return $vars;
     }
 
-    private static function get_order() {
-        return new Order([
-            'payment_type' => sanitize_text_field( $_REQUEST['payment_type'] ?? '' ),
-            'name'    => sanitize_text_field( $_REQUEST['name'] ?? '' ),
-            'email'   => sanitize_text_field( $_REQUEST['email'] ?? '' ),
-            'phone'   => sanitize_text_field( $_REQUEST['phone'] ?? '' ),
-            'amount'  => intval( $_REQUEST['amount'] ?? 0 ),
-            'comment' => sanitize_textarea_field( $_REQUEST['comment'] ?? '' ),
-        ]);
-    }
-
     /**
      * POST by contact form 7
      */
-    public static function payment_request()
+    public static function payment_request($response)
     {
-        $order = self::get_order();
-        $payment = Payment_Factory::getPaymentMethod($order);
-        $response = $payment->request();
+        if ('mail_sent' === $response['status']) {
+            $posted_data = \WPCF7_Submission::get_instance()->get_posted_data();
+            $order = new Order($posted_data);
+            $payment = Payment_Factory::getPaymentMethod($order);
 
-        $order->payment_code = $response['code'];
-        $order->save();
+            $requestResult = $payment->request($order);
 
-        wp_redirect($response['url']);
-        exit;
+            $order->payment_code = $requestResult['code'];
+            $order->save();
+
+            $response['redirect'] = $requestResult['url'];
+        }
+
+        return $response;
     }
 
     /**

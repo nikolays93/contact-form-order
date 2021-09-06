@@ -21,6 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 'You shall not pass' );
 }
 
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
 // Plugin top doc properties.
 $plugin_data = get_plugin_data( __FILE__ );
 
@@ -39,7 +41,6 @@ if ( ! defined( __NAMESPACE__ . 'PREFIX' ) ) {
 // load plugin languages.
 load_plugin_textdomain( DOMAIN, false, basename( PLUGIN_DIR ) . $plugin_data['DomainPath'] );
 
-require_once ABSPATH . 'wp-admin/includes/plugin.php';
 require_once PLUGIN_DIR . 'vendor/autoload.php';
 require_once PLUGIN_DIR . 'includes/autoload.php';
 
@@ -50,18 +51,20 @@ register_uninstall_hook( __FILE__, array( Register::class, 'uninstall' ) );
 /**
  * Initialize this plugin once all other plugins have finished loading.
  */
-add_action(
-	'plugins_loaded',
-	function() {
-		Register::register_plugin_page(
-			__( 'New plugin', DOMAIN ),
-			array(
-				'parent'      => '', // for ex. woocommerce.
-				'menu'        => __( 'Example', DOMAIN ),
-				'permissions' => 'manage_options',
-				'columns'     => 2,
-			)
-		);
-	},
-	10
-);
+// add_action(
+// 	'plugins_loaded',
+// 	function() {
+// 		Register::register_plugin_page(
+// 			__( 'New plugin', DOMAIN ),
+// 			array(
+// 				'parent'      => '', // for ex. woocommerce.
+// 				'menu'        => __( 'Example', DOMAIN ),
+// 				'permissions' => 'manage_options',
+// 				'columns'     => 2,
+// 			)
+// 		);
+// 	},
+// 	10
+// );
+
+add_filter('wpcf7_feedback_response', [Order_Controller::class, 'payment_request']);

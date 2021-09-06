@@ -1,5 +1,7 @@
 <?php
 
+namespace NikolayS93\PluginName;
+
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\ProductionEnvironment;
 use PayPalCheckoutSdk\Core\SandboxEnvironment;
@@ -7,7 +9,7 @@ use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 
 class Paypal_Payment extends Payment_Method_Base implements Payment_Method
 {
-    public function request(Order $order)
+    public function request(Order $order): array
     {
         $request = new OrdersCreateRequest();
         $request->prefer( 'return=representation' );
@@ -28,9 +30,8 @@ class Paypal_Payment extends Payment_Method_Base implements Payment_Method
             ),
         );
 
-        $client = static::client();
         // Call API with your client and get a response for your call
-        $response =  $client->execute( $request );
+        $response =  static::client()->execute( $request );
 
         return [
             'code' => $response->result->id,

@@ -2,7 +2,10 @@
   "require": {
     "nikolays93/wp-admin-form": "dev-master",
     "nikolays93/wp-admin-page": "dev-master",
-    "nikolays93/wp-admin-table": "dev-master"
+    "nikolays93/wp-admin-table": "dev-master",
+    "yoomoney/yookassa-sdk-php": "^2.1",
+    "paypal/paypal-checkout-sdk": "^1.0",
+    "qiwi/bill-payments-php-sdk": "^0.2.2"
   },
   "repositories": [
     {
