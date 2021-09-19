@@ -1,21 +1,22 @@
 <?php
 /**
- * Plugin Name: New plugin
+ * Plugin Name: Contact Form Orders
  * Plugin URI: https://github.com/nikolays93
- * Description: New plugin boilerplate
+ * Description: Contact Form payment module
  * Version: 0.1.0
  * Author: NikolayS93
  * Author URI: https://vk.com/nikolays_93
  * Author EMAIL: NikolayS93@ya.ru
  * License: GNU General Public License v2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: _plugin
+ * Text Domain: wpcf0
  * Domain Path: /languages/
  *
- * @package Newproject.WordPress.plugin
+ * @php 7.1
+ * @package WordPress.ContactForm.Orders
  */
 
-namespace NikolayS93\PluginName;
+namespace NikolayS93\ContactFormOrders;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit( 'You shall not pass' );
@@ -51,20 +52,50 @@ register_uninstall_hook( __FILE__, array( Register::class, 'uninstall' ) );
 /**
  * Initialize this plugin once all other plugins have finished loading.
  */
-// add_action(
-// 	'plugins_loaded',
-// 	function() {
-// 		Register::register_plugin_page(
-// 			__( 'New plugin', DOMAIN ),
-// 			array(
-// 				'parent'      => '', // for ex. woocommerce.
-// 				'menu'        => __( 'Example', DOMAIN ),
-// 				'permissions' => 'manage_options',
-// 				'columns'     => 2,
-// 			)
-// 		);
-// 	},
-// 	10
-// );
+add_action(
+	'plugins_loaded',
+	function() {
+		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		if ( !is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
+			return;
+		}
 
-add_filter('wpcf7_feedback_response', [Order_Controller::class, 'payment_request']);
+		add_filter('wpcf0_payment_methods', function(array $payment_methods) {
+			return array_merge($payment_methods, ['paypal' => Paypal_Payment::class]);
+		});
+
+		// Register::register_plugin_page(
+		// 	__( 'New plugin', DOMAIN ),
+		// 	array(
+		// 		'parent'      => '', // for ex. woocommerce.
+		// 		'menu'        => __( 'Example', DOMAIN ),
+		// 		'permissions' => 'manage_options',
+		// 		'columns'     => 2,
+		// 	)
+		// );
+
+        Register::settings_page(
+            __( 'Настройки платежей', DOMAIN ),
+            array(
+                'parent'      => 'options-general.php', // for ex. woocommerce.
+                'menu'        => __( 'Contact Form Orders', DOMAIN ),
+                'permissions' => 'manage_options',
+                'columns'     => 2,
+            )
+        );
+
+		require 'includes/wpcf7/form-tag-order.php';
+		require 'includes/wpcf7/form-tag-order-amount.php';
+		require 'includes/wpcf7/form-tag-payment-type.php';
+
+		// use `wpcf7_before_send_mail` for abort message
+		add_filter('wpcf7_feedback_response', [Order_Controller::class, 'payment_request']);
+
+		add_filter( 'query_vars', [Order_Controller::class, 'register_vars'] );
+		add_action('pre_get_posts', [Order_Controller::class, 'paymentResultPage']);
+		add_action('pre_get_posts', [Order_Controller::class, 'payment_confirm']);
+	},
+	10
+);
+
+

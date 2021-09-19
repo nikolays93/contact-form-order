@@ -1,6 +1,6 @@
 <?php
 
-namespace NikolayS93\PluginName;
+namespace NikolayS93\ContactFormOrders;
 
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\ProductionEnvironment;
@@ -9,6 +9,11 @@ use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 
 class Paypal_Payment extends Payment_Method_Base implements Payment_Method
 {
+	public static function getPaymentLabel(): string
+	{
+		return 'PayPal';
+	}
+
     public function request(Order $order): array
     {
         $request = new OrdersCreateRequest();
@@ -19,14 +24,14 @@ class Paypal_Payment extends Payment_Method_Base implements Payment_Method
                 array(
                     'reference_id' => $order->id,
                     'amount'       => array(
-                        'value'         => $order->amount,
+                        'value'         => $order->get_amount(),
                         'currency_code' => 'RUB',
                     ),
                 ),
             ),
             'application_context' => array(
-                'cancel_url' => $this->restore_url($order),
-                'return_url' => $this->success_url($order),
+                'cancel_url' => $this->cancel_url($order),
+                'return_url' => $this->return_url($order),
             ),
         );
 
@@ -35,11 +40,11 @@ class Paypal_Payment extends Payment_Method_Base implements Payment_Method
 
         return [
             'code' => $response->result->id,
-            'url' => static::getApproveLink($response),
+            'link' => static::getApproveLink($response),
         ];
     }
 
-    public function validateReturn(array $requestBody): bool
+    public function validateConfirm(array $requestBody): array
     {
         return [
             'payment_code' => $requestBody['resource']['id'],

@@ -5,7 +5,7 @@
  * @package Newproject.WordPress.plugin
  */
 
-namespace NikolayS93\PluginName;
+namespace NikolayS93\ContactFormOrders;
 
 spl_autoload_register(
 	function ( $class_name ) {

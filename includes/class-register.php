@@ -5,7 +5,7 @@
  * @package Newproject.WordPress.plugin
  */
 
-namespace NikolayS93\PluginName;
+namespace NikolayS93\ContactFormOrders;
 
 use NikolayS93\WPAdminPage\Page;
 use NikolayS93\WPAdminPage\Section;
@@ -20,6 +20,17 @@ class Register {
 	 * Call this method before activate plugin
 	 */
 	public static function activate() {
+		Order::create_table();
+
+		/**
+		 * /order/{order_id}/return/
+		 * /order/{order_id}/cancel/
+		 * /payment/{payment_method}/confirm/
+		 */
+		add_rewrite_rule( 'order/([1-9]+)/return/?', 'index.php?order_id=$matches[1]', 'top' );
+		add_rewrite_rule( 'order/([1-9]+)/cancel/?', 'index.php?order_id=$matches[1]', 'top' );
+		add_rewrite_rule( 'payment/([^/]*)/confirm/?', 'index.php?payment_method=$matches[1]', 'top' );
+		flush_rewrite_rules();
 	}
 
 	/**
@@ -32,56 +43,60 @@ class Register {
 	 * Call this method before delete plugin
 	 */
 	public static function uninstall() {
+		Order::delete_table();
 	}
 
 	/**
-	 * Register new admin menu item
+	 * Register admin settings menu item (page)
 	 *
-	 * @param  string $pagename  h1 title on plugin page.
-	 * @param  array  $pageprops page properties @see NikolayS93\WPAdminPage\Page.
-	 * @return Page $Page
+	 * @param string $pagename h1 page title.
+	 * @param array  $pageprops page properties
 	 */
-	public static function register_plugin_page( $pagename = '', $pageprops = array() ) {
+	public static function settings_page( $pagename = '', $pageprops = array() ) {
 		$page = new Page( Option::get_option_name(), $pagename, $pageprops );
 
-		$page->set_content( array( __CLASS__, 'plugin_page_content' ) );
-		$page->set_assets( array( __CLASS__, 'plugin_page_assets' ) );
+		$page->set_assets(
+			static function () {
+			}
+		);
 
-		$page->add_section(
-			new Section(
-				'section',
-				__( 'Section', DOMAIN ),
-				realpath( PLUGIN_DIR . 'admin/template/section.php' )
-			)
+		$page->set_content(
+			static function() {
+			}
 		);
 
 		$page->add_metabox(
 			new Metabox(
-				'metabox',
-				__( 'MetaBox', DOMAIN ),
-				realpath( PLUGIN_DIR . 'admin/template/metabox.php' ),
+				'Settings',
+				__( 'Настройки', DOMAIN ),
+				realpath( PLUGIN_DIR . 'admin/template/settings.php' ),
 				$position = 'side',
 				$priority = 'high'
 			)
 		);
 
-		return $page;
-	}
+		$page->add_section(
+			new Section(
+				'Yookassa',
+				__( 'Yookassa', DOMAIN ),
+				realpath( PLUGIN_DIR . 'admin/template/yookassa.php' )
+			)
+		);
 
-	/**
-	 * [@todo write plugin_page_content description]
-	 */
-	public static function plugin_page_content() {
-		$page_content = realpath( PLUGIN_DIR . 'admin/template/menu-page.php' );
+		$page->add_section(
+			new Section(
+				'Paypal',
+				__( 'Paypal', DOMAIN ),
+				realpath( PLUGIN_DIR . 'admin/template/paypal.php' )
+			)
+		);
 
-		if ( $page_content ) {
-			require $page_content;
-		}
-	}
-
-	/**
-	 * [@todo write plugin_page_assets description]
-	 */
-	public static function plugin_page_assets() {
+		$page->add_section(
+			new Section(
+				'Qiwi',
+				__( 'Qiwi', DOMAIN ),
+				realpath( PLUGIN_DIR . 'admin/template/qiwi.php' )
+			)
+		);
 	}
 }

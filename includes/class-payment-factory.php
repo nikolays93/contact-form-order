@@ -1,19 +1,23 @@
 <?php
 
-namespace NikolayS93\PluginName;
+namespace NikolayS93\ContactFormOrders;
 
 class Payment_Factory
 {
+	public static function getPaymentMethods(): array
+	{
+		return apply_filters( 'wpcf0_payment_methods', [] );
+	}
+
     public static function getPaymentMethodByType(string $type): Payment_Method
     {
-        switch ($type) {
-            case "cc":
-                return new CreditCardPayment();
-            case "paypal":
-                return new Paypal_Payment();
-            default:
-                throw new \Exception("Unknown Payment Method");
-        }
+    	$payment_methods = Payment_Factory::getPaymentMethods();
+
+    	if (empty($payment_methods[$type]) ) {
+		    throw new \Exception("Unknown Payment Method");
+	    }
+
+    	return new $payment_methods[$type];
     }
 
     /**

@@ -5,7 +5,7 @@
  * @package Newproject.WordPress.plugin
  */
 
-namespace NikolayS93\PluginName;
+namespace NikolayS93\ContactFormOrders;
 
 /**
  * Class for works with plugin options
@@ -26,12 +26,15 @@ class Option {
 	 */
 	private $context;
 
-	/**
-	 * Preload options.
-	 *
-	 * @var string yes|no.
-	 */
-	private $autoload;
+	private static $instance = array();
+
+	public static function get_instance( $context = '' ) {
+		if ( ! isset( static::$instance[ $context ] ) ) {
+			static::$instance[ $context ] = new static( $context );
+		}
+
+		return static::$instance[ $context ];
+	}
 
 	/**
 	 * Fill properties
@@ -39,9 +42,23 @@ class Option {
 	 * @param string $context  options category.
 	 * @param string $autoload yes|no preload options.
 	 */
-	public function __construct( $context = '', $autoload = 'yes' ) {
-		$this->context  = $context;
-		$this->autoload = $autoload;
+	private function __construct( $context = '' ) {
+		$this->context = $context;
+
+		/**
+		 * Option name by context
+		 *
+		 * @var string
+		 */
+		$option_name = self::get_option_name( $this->context );
+
+		/**
+		 * Get field value from wp_options
+		 *
+		 * @link https://developer.wordpress.org/reference/functions/get_option/
+		 * @var mixed
+		 */
+		$this->option = get_option( $option_name, $this->option );
 	}
 
 	/**
@@ -58,35 +75,11 @@ class Option {
 	}
 
 	/**
-	 * Get plugin setting from cache or database
-	 *
-	 * @return mixed
-	 */
-	public function fetch() {
-		/**
-		 * Option name by context
-		 *
-		 * @var string
-		 */
-		$option_name = self::get_option_name( $this->context );
-
-		/**
-		 * Get field value from wp_options
-		 *
-		 * @link https://developer.wordpress.org/reference/functions/get_option/
-		 * @var mixed
-		 */
-		$this->option = get_option( $option_name, $this->option );
-
-		return $this;
-	}
-
-	/**
 	 * [@todo write save description]
 	 *
 	 * @return [type] [description].
 	 */
-	public function save() {
+	public function save( $autoload = 'yes' ) {
 		if ( empty( $this->option ) ) {
 			return null;
 		}
@@ -94,7 +87,7 @@ class Option {
 		return update_option(
 			self::get_option_name( $this->context ),
 			$this->option,
-			$this->autoload
+			$autoload
 		);
 	}
 
@@ -125,17 +118,12 @@ class Option {
 	 * @param [type] $value [description].
 	 */
 	public function set( $key, $value ) {
-		$this->option[ $key ] = $value;
-	}
-
-	/**
-	 * [@todo write set_array description]
-	 *
-	 * @param [type] $values [description].
-	 */
-	public function set_array( $values ) {
-		foreach ( $values as $key => $value ) {
-			$this->set( $key, $value );
+		if ( is_array( $key ) ) {
+			foreach ( $key as $k => $v ) {
+				$this->set( $k, $v );
+			}
 		}
+
+		$this->option[ $key ] = $value;
 	}
 }
