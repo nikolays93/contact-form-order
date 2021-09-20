@@ -38,8 +38,8 @@ class Register {
 		 * /order/{order_id}/cancel/
 		 * /payment/{payment_method}/confirm/
 		 */
-		add_rewrite_rule( 'order/([1-9]+)/return/?', 'index.php?order_id=$matches[1]', 'top' );
-		add_rewrite_rule( 'order/([1-9]+)/cancel/?', 'index.php?order_id=$matches[1]', 'top' );
+		add_rewrite_rule( 'order/([0-9]+)/return/?', 'index.php?order_id=$matches[1]', 'top' );
+		add_rewrite_rule( 'order/([0-9]+)/cancel/?', 'index.php?order_id=$matches[1]', 'top' );
 		add_rewrite_rule( 'payment/([^/]*)/confirm/?', 'index.php?payment_method=$matches[1]', 'top' );
 		flush_rewrite_rules();
 	}
