@@ -61,7 +61,10 @@ add_action(
 		}
 
 		add_filter('wpcf0_payment_methods', function(array $payment_methods) {
-			return array_merge($payment_methods, ['paypal' => Paypal_Payment::class]);
+			return array_merge($payment_methods, [
+				'yookassa' => YooKassa_Payment::class,
+				'paypal' => Paypal_Payment::class,
+			]);
 		});
 
 		// Register::register_plugin_page(
@@ -91,7 +94,7 @@ add_action(
 		// use `wpcf7_before_send_mail` for abort message
 		add_filter('wpcf7_feedback_response', [Order_Controller::class, 'payment_request']);
 
-		add_filter( 'query_vars', [Order_Controller::class, 'register_vars'] );
+		add_filter( 'query_vars', [Register::class, 'vars'] );
 		add_action('pre_get_posts', [Order_Controller::class, 'paymentResultPage']);
 		add_action('pre_get_posts', [Order_Controller::class, 'payment_confirm']);
 	},

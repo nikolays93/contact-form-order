@@ -46,6 +46,10 @@ class Paypal_Payment extends Payment_Method_Base implements Payment_Method
 
     public function validateConfirm(array $requestBody): array
     {
+    	if (empty($requestBody['resource']['id']) || empty($requestBody['event_type'])) {
+		    throw new \Exception( 'Corrupted request body.' );
+	    }
+
         return [
             'payment_code' => $requestBody['resource']['id'],
             'confirm' => 'CHECKOUT.ORDER.APPROVED' === $requestBody['event_type'],

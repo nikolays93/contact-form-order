@@ -5,17 +5,6 @@ namespace NikolayS93\ContactFormOrders;
 class Order_Controller
 {
     /**
-     * @param  array  $vars Previous vars
-     * @return array
-     */
-    public static function register_vars(array $vars) {
-        $vars[] = 'order_id';
-        $vars[] = 'payment_method';
-
-        return $vars;
-    }
-
-    /**
      * POST by contact form 7
      */
     public static function payment_request($response)
@@ -65,10 +54,11 @@ class Order_Controller
 	    	return;
 	    }
 
+	    $protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
+
 	    $allowed_payment_methods = apply_filters('wpcf0_payment_methods', []);
 	    if ( ! in_array($payment_method, array_keys($allowed_payment_methods)) ) {
-		    $protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
-		    header($protocol . ' 405 Method Not Allowed');
+		    header($protocol . ' 405 Method Not Allowed', true, 405);
 		    die('You are not allowed this payment method.');
 	    }
 
@@ -83,9 +73,12 @@ class Order_Controller
                 $order->complete();
                 $order->save();
             }
-
         } catch (\Exception $e) {
+	        error_log( $e->getMessage() );
+	        header( $protocol . ' 500 Internal Server Error', true, 500 );
         }
+
+	    header( $protocol . ' 200 OK', true, 200 );
     }
 
     /**
@@ -113,7 +106,8 @@ class Order_Controller
 		    add_filter(
 			    'template_include',
 			    function ( $template ) {
-				    return locate_template( array( 'page-payment.php' ) ) ?: $template;
+				    return locate_template('page-payment-confirm.php') ?:
+					    PLUGIN_DIR . 'page-payment-confirm.php';
 			    },
 			    99
 		    );

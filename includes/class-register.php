@@ -17,6 +17,17 @@ use NikolayS93\WPAdminPage\Metabox;
 class Register {
 
 	/**
+	 * @param  array  $vars Previous vars
+	 * @return array
+	 */
+	public static function vars(array $vars) {
+		$vars[] = 'order_id';
+		$vars[] = 'payment_method';
+
+		return $vars;
+	}
+
+	/**
 	 * Call this method before activate plugin
 	 */
 	public static function activate() {
