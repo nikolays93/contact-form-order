@@ -6,7 +6,7 @@ add_action( 'wpcf7_init', 'wpcf0_add_form_tag_order_status', 10, 0 );
 
 function wpcf0_add_form_tag_order_status(): void {
 	wpcf7_add_form_tag(
-		array( 'payment_code', 'order_status' ),
+		array( 'order_status' ),
 		'wpcf0_order_form_tag_handler',
 		[]
 	);
@@ -18,8 +18,6 @@ function wpcf0_order_form_tag_handler( WPCF7_FormTag $tag ): string {
 	if ('order_status' === $tag->type) {
 		$tag->name = 'order_status';
 		$value = Order::STATUS_INIT;
-	} elseif ('payment_code' === $tag->type) {
-		$tag->name = 'payment_code';
 	}
 
 	$validation_error = wpcf7_get_validation_error( $tag->name );
@@ -70,8 +68,6 @@ function wpcf0_order_status_validation_filter( $result, WPCF7_FormTag $tag ) {
 
 	if ('order_status' === $tag->type && Order::STATUS_INIT !== $value ) {
 		$result->invalidate( $tag, 'Order status error' );
-	} elseif ('payment_code' === $tag->type && '' !== $value) {
-		$result->invalidate( $tag, 'Payment code error' );
 	}
 
 	return $result;

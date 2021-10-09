@@ -9,6 +9,8 @@ use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 
 class Paypal_Payment extends Payment_Method_Base implements Payment_Method
 {
+	const TYPE = 'paypal';
+
 	public static function getPaymentLabel(): string
 	{
 		return 'PayPal';

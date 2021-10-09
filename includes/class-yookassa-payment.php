@@ -12,6 +12,8 @@ use YooKassa\Model\NotificationEventType;
 
 class YooKassa_Payment extends Payment_Method_Base implements Payment_Method
 {
+	const TYPE = 'yookassa';
+
 	public static function getPaymentLabel(): string
 	{
 		return 'YooKassa';

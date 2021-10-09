@@ -7,42 +7,69 @@ class Order_Controller
     /**
      * POST by contact form 7
      */
-    public static function payment_request($response)
-    {
-        if ('mail_sent' === $response['status']) {
-        	$submission = \WPCF7_Submission::get_instance();
-	        $posted_data = $submission->get_posted_data();
+	public static function payment_request( $contact_form, $result )
+	{
+		// class exists
+		$cases = (array) apply_filters( 'wpcf0_submit_if', array( 'mail_sent' ) );
 
-        	if (isset($posted_data['order_amount'])) {
-		        $order = new Order(array_merge($posted_data, ['amount' => $posted_data['order_amount']]));
+		if ( empty( $result['status'] ) || ! in_array( $result['status'], $cases ) ) {
+			return;
+		}
 
-		        try {
-			        $payment = Payment_Factory::getPaymentMethod($order);
-			        $requestResult = $payment->request($order);
+		$submission = \WPCF7_Submission::get_instance();
 
-			        if (empty($requestResult['link'])) {
-			        	throw new \Exception('Empty response url');
-			        }
+		if ( ! $submission || ! $posted_data = $submission->get_posted_data() ) {
+			return;
+		}
 
-			        $order->payment_code = $requestResult['code'];
-			        $order->save();
+		if ( $submission->get_meta( 'do_not_store' ) ) {
+			return;
+		}
 
-			        $response['returnLink'] = $payment->return_url($order);
-			        $response['approveLink'] = $requestResult['link'];
-			        $response['message'] = 'Мы получили ваше сообщение. Сейчас вы будете перенаправленны на страницу оплаты.';
-		        } catch (\Exception $e) {
-			        $response['message'] = 'Мы получили ваше сообщение. Но сервис платежей сейчас не доступен. Попробуйте выбрать другой способ оплаты или свяжитесь с администратором.';
-			        $response['status'] = 'mail_sent_but_payment_request_fail';
+		$posted_data = $submission->get_posted_data();
+		$response_order = [];
 
-			        if (defined('WP_DEBUG_DISPLAY') && true === WP_DEBUG_DISPLAY) {
-				        $response['message'] = $e->getMessage();
-			        }
-		        }
-	        }
-        }
+		if (isset($posted_data['order_amount'])) {
+			$order = new Order(array_merge($posted_data, ['amount' => $posted_data['order_amount']]));
 
-        return $response;
-    }
+			try {
+				$payment = Payment_Factory::getPaymentMethod($order);
+				$requestResult = $payment->request($order);
+
+				if (empty($requestResult['link'])) {
+					throw new \Exception('Empty response url');
+				}
+
+				$order->payment_type = $payment::TYPE;
+				$order->payment_code = $requestResult['code'];
+				$order->save();
+
+				$response_order['returnLink'] = $payment->return_url($order);
+				$response_order['approveLink'] = $requestResult['link'];
+				$response_order['message'] = 'Мы получили ваше сообщение. Сейчас вы будете перенаправленны на страницу оплаты.';
+			} catch (\Exception $e) {
+				$response_order['message'] = 'Мы получили ваше сообщение. Но сервис платежей сейчас не доступен. Попробуйте выбрать другой способ оплаты или свяжитесь с администратором.';
+				$response_order['status'] = 'mail_sent_but_payment_request_fail';
+
+				if (defined('WP_DEBUG_DISPLAY') && true === WP_DEBUG_DISPLAY) {
+					$response_order['message'] = $e->getMessage();
+				}
+			}
+		}
+
+		add_filter('wpcf7_feedback_response', static function( $response ) use ( $response_order ) {
+			return array_merge( $response, $response_order );
+		});
+
+		add_filter( 'flamingo_add_inbound', static function ( $args ) use ( $order ) {
+			$args[ 'fields' ][ 'payment_code' ] = $order->payment_code;
+			return $args;
+		} );
+
+		add_action('wpcf7_after_flamingo', static function ( $result ) use ( $order ) {
+			update_post_meta( $result['flamingo_inbound_id'], 'payment_code', $order->payment_code );
+		});
+	}
 
     /**
      * ANY /payment/{payment_method}/confirm/
@@ -55,7 +82,7 @@ class Order_Controller
 
 	    $protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
 
-	    $allowed_payment_methods = apply_filters('wpcf0_payment_methods', []);
+	    $allowed_payment_methods = Payment_Factory::getPaymentMethods();
 	    if ( ! in_array($payment_method, array_keys($allowed_payment_methods)) ) {
 		    header($protocol . ' 405 Method Not Allowed', true, 405);
 		    error_log( 'not allowed payment method ' . $payment_method );
@@ -75,7 +102,6 @@ class Order_Controller
             if (true === $result['confirm']) {
                 $order = Order::get($result['payment_code']);
                 $order->complete();
-                $order->save();
             }
         } catch (\Exception $e) {
 	        error_log( $e->getMessage() );

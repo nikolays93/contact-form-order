@@ -46,7 +46,7 @@ class Order
 	 *
 	 * @return mixed
 	 */
-	public static function get( $idOrCode = null)
+	public static function get( $idOrCode = null )
 	{
 		if ($idOrCode) {
 			$orderData = [];
@@ -85,6 +85,9 @@ class Order
 	public function complete(): void
     {
         $this->status = self::STATUS_DONE;
+        $this->save();
+
+        do_action( 'wpcf0_order_complete', $this );
     }
 
     public function save(): self
@@ -140,9 +143,9 @@ class Order
 	{
 		global $wpdb;
 
-		$results = $wpdb->get_results("SELECT * FROM `".Order::getTableName()."`");
+		$results = $wpdb->get_results("SELECT * FROM `".Order::getTableName()."`", ARRAY_A);
 
-		return array_map(function($result) {
+		return array_map(static function($result) {
 			return new static($result);
 		}, $results);
 	}

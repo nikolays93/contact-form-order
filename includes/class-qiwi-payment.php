@@ -4,6 +4,8 @@ namespace NikolayS93\ContactFormOrders;
 
 class Qiwi_Payment extends Payment_Method_Base implements Payment_Method
 {
+	const TYPE = 'qiwi';
+
 	public static function getPaymentLabel(): string
 	{
 		return 'Qiwi';

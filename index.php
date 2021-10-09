@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Contact Form Orders
+ * Plugin Name: Contact Form Order
  * Plugin URI: https://github.com/nikolays93
- * Description: Contact Form payment module
+ * Description: Contact Form (Flamingo) payment module
  * Version: 0.1.0
  * Author: NikolayS93
  * Author URI: https://vk.com/nikolays_93
@@ -62,9 +62,9 @@ add_action(
 
 		add_filter('wpcf0_payment_methods', function(array $payment_methods) {
 			return array_merge($payment_methods, [
-				'yookassa' => YooKassa_Payment::class,
-				'paypal' => Paypal_Payment::class,
-				'qiwi' => Qiwi_Payment::class,
+				YooKassa_Payment::TYPE => YooKassa_Payment::class,
+				Paypal_Payment::TYPE => Paypal_Payment::class,
+				Qiwi_Payment::TYPE => Qiwi_Payment::class,
 			]);
 		});
 
@@ -92,14 +92,33 @@ add_action(
 		require 'includes/wpcf7/form-tag-order-amount.php';
 		require 'includes/wpcf7/form-tag-payment-type.php';
 
-		// use `wpcf7_before_send_mail` for abort message
-		add_filter('wpcf7_feedback_response', [Order_Controller::class, 'payment_request']);
+		// Before flamingo submit required
+		add_action( 'wpcf7_submit', [Order_Controller::class, 'payment_request'], 8, 2 );
 
 		add_filter( 'query_vars', [Register::class, 'vars'] );
 		add_action('pre_get_posts', [Order_Controller::class, 'paymentResultPage']);
 		add_action('pre_get_posts', [Order_Controller::class, 'payment_confirm']);
+
+		add_action( 'wpcf0_order_complete', static function($order) {
+			if (!class_exists('Flamingo_Inbound_Message')) {
+				return false;
+			}
+
+			$item = current((array) \Flamingo_Inbound_Message::find([
+				'posts_per_page' => 1,
+				'meta_key' => 'payment_code',
+				'meta_value' => $order->payment_code,
+			]));
+
+			// Do anything when complete order.
+			if ($child_id = absint($item['fields']['child_id'])) {
+				update_post_meta($child_id, 'reward_price',
+					(int) get_post_meta($child_id, 'reward_price') + $order->amount);
+			}
+
+			$item->fields['order_status'] = $order->status;
+			return $item->save();
+		} );
 	},
 	10
 );
-
-
