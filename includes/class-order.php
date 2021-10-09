@@ -84,10 +84,25 @@ class Order
 
 	public function complete(): void
     {
-        $this->status = self::STATUS_DONE;
-        $this->save();
+    	if ($this->status !== self::STATUS_DONE) {
+    		$this->status = self::STATUS_DONE;
+        	$this->save();
 
-        do_action( 'wpcf0_order_complete', $this );
+        	$item = current((array) \Flamingo_Inbound_Message::find([
+			    'posts_per_page' => 1,
+			    'meta_key' => 'payment_code',
+			    'meta_value' => $this->payment_code,
+		    ]));
+
+		    // Do anything when complete order.
+		    if (
+			    $item &&
+			    "Адресная помощь" === ($item->fields['target'][0] ?? '') &&
+			    ($child_id = absint($item->fields['child_id'] ?? 0))) {
+			    update_post_meta($child_id, 'reward_price',
+				    (int) get_post_meta($child_id, 'reward_price', true) + $this->amount);
+		    }
+    	}
     }
 
     public function save(): self

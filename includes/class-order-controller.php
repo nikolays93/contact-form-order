@@ -40,6 +40,7 @@ class Order_Controller
 					throw new \Exception('Empty response url');
 				}
 
+				$order->status = Order::STATUS_INIT;
 				$order->payment_type = $payment::TYPE;
 				$order->payment_code = $requestResult['code'];
 				$order->save();
@@ -61,18 +62,13 @@ class Order_Controller
 			return array_merge( $response, $response_order );
 		});
 
-		add_filter( 'flamingo_add_inbound', static function ( $args ) use ( $order ) {
-			$args[ 'fields' ][ 'payment_code' ] = $order->payment_code;
-			return $args;
-		} );
-
 		add_action('wpcf7_after_flamingo', static function ( $result ) use ( $order ) {
 			update_post_meta( $result['flamingo_inbound_id'], 'payment_code', $order->payment_code );
 		});
 	}
 
     /**
-     * ANY /payment/{payment_method}/confirm/
+     * ANY /payment/{Payment_Method::TYPE}/confirm/
      */
     public static function payment_confirm(): void
     {

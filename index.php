@@ -88,7 +88,6 @@ add_action(
             )
         );
 
-		require 'includes/wpcf7/form-tag-order.php';
 		require 'includes/wpcf7/form-tag-order-amount.php';
 		require 'includes/wpcf7/form-tag-payment-type.php';
 
@@ -98,27 +97,6 @@ add_action(
 		add_filter( 'query_vars', [Register::class, 'vars'] );
 		add_action('pre_get_posts', [Order_Controller::class, 'paymentResultPage']);
 		add_action('pre_get_posts', [Order_Controller::class, 'payment_confirm']);
-
-		add_action( 'wpcf0_order_complete', static function($order) {
-			if (!class_exists('Flamingo_Inbound_Message')) {
-				return false;
-			}
-
-			$item = current((array) \Flamingo_Inbound_Message::find([
-				'posts_per_page' => 1,
-				'meta_key' => 'payment_code',
-				'meta_value' => $order->payment_code,
-			]));
-
-			// Do anything when complete order.
-			if ($child_id = absint($item['fields']['child_id'])) {
-				update_post_meta($child_id, 'reward_price',
-					(int) get_post_meta($child_id, 'reward_price') + $order->amount);
-			}
-
-			$item->fields['order_status'] = $order->status;
-			return $item->save();
-		} );
 	},
 	10
 );

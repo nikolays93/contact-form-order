@@ -6,6 +6,7 @@ class Payment_Factory
 {
 	public static function getPaymentMethods(): array
 	{
+		// @todo check payment methods instance.
 		return apply_filters( 'wpcf0_payment_methods', [] );
 	}
 
