@@ -100,8 +100,12 @@ class Order
 		    $res['payment_code'] = $this->payment_code;
 	    }
 
-	    $wpdb->insert(static::getTableName(), $res);
-	    $this->id = $wpdb->insert_id;
+	    if (!$this->id) {
+	    	$wpdb->insert(static::getTableName(), $res);
+	    	$this->id = $wpdb->insert_id;
+	    } else {
+	    	$wpdb->update(static::getTableName(), $res, ['id' => $this->id]);
+	    }
 
 	    return $this;
     }
@@ -113,8 +117,9 @@ class Order
 		    $wpdb->query("
 				CREATE TABLE IF NOT EXISTS `".Order::getTableName()."` (
 			        `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			        `ext` varchar(100) NULL,
 		            `payment_code` varchar(100) NULL UNIQUE,
-		            `payment_type` tinyint unsigned NOT NULL,
+		            `payment_type` varchar(100) NULL,
 		            `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		            `amount` decimal NOT NULL,
 		            `status` varchar(100) NOT NULL

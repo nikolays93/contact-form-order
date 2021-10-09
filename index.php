@@ -64,6 +64,7 @@ add_action(
 			return array_merge($payment_methods, [
 				'yookassa' => YooKassa_Payment::class,
 				'paypal' => Paypal_Payment::class,
+				'qiwi' => Qiwi_Payment::class,
 			]);
 		});
 

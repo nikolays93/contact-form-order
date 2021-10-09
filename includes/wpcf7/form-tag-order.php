@@ -69,9 +69,9 @@ function wpcf0_order_status_validation_filter( $result, WPCF7_FormTag $tag ) {
 	$value = wpcf0_sanitize_request_value($tag->name);
 
 	if ('order_status' === $tag->type && Order::STATUS_INIT !== $value ) {
-		$result->invalidate( $tag, 'Order system error' );
+		$result->invalidate( $tag, 'Order status error' );
 	} elseif ('payment_code' === $tag->type && '' !== $value) {
-		$result->invalidate( $tag, 'Payment system error' );
+		$result->invalidate( $tag, 'Payment code error' );
 	}
 
 	return $result;

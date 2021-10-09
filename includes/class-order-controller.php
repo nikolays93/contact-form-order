@@ -14,8 +14,7 @@ class Order_Controller
 	        $posted_data = $submission->get_posted_data();
 
         	if (isset($posted_data['order_amount'])) {
-		        $order = new Order($posted_data);
-		        $order->set_amount($posted_data['order_amount']);
+		        $order = new Order(array_merge($posted_data, ['amount' => $posted_data['order_amount']]));
 
 		        try {
 			        $payment = Payment_Factory::getPaymentMethod($order);
@@ -32,7 +31,7 @@ class Order_Controller
 			        $response['approveLink'] = $requestResult['link'];
 			        $response['message'] = 'Мы получили ваше сообщение. Сейчас вы будете перенаправленны на страницу оплаты.';
 		        } catch (\Exception $e) {
-			        $response['message'] = 'Мы получили ваше сообщение. Но сервис платежей сейчас не доступен. Попробуйте еще раз или свяжитесь с администратором.';
+			        $response['message'] = 'Мы получили ваше сообщение. Но сервис платежей сейчас не доступен. Попробуйте выбрать другой способ оплаты или свяжитесь с администратором.';
 			        $response['status'] = 'mail_sent_but_payment_request_fail';
 
 			        if (defined('WP_DEBUG_DISPLAY') && true === WP_DEBUG_DISPLAY) {
@@ -59,13 +58,18 @@ class Order_Controller
 	    $allowed_payment_methods = apply_filters('wpcf0_payment_methods', []);
 	    if ( ! in_array($payment_method, array_keys($allowed_payment_methods)) ) {
 		    header($protocol . ' 405 Method Not Allowed', true, 405);
-		    die('You are not allowed this payment method.');
+		    error_log( 'not allowed payment method ' . $payment_method );
+		    wp_die( 'На сайте произошла непредвиденная ошибка, повторите позже, или обратитесь к администратору' );
 	    }
 
         $requestBody = json_decode( file_get_contents( 'php://input' ), true );
         $payment = Payment_Factory::getPaymentMethodByType($payment_method);
 
         try {
+        	if (!is_array($requestBody)) {
+        		throw new \Exception('Invalid request body');
+        	}
+
             $result = $payment->validateConfirm($requestBody);
 
             if (true === $result['confirm']) {
@@ -76,6 +80,7 @@ class Order_Controller
         } catch (\Exception $e) {
 	        error_log( $e->getMessage() );
 	        header( $protocol . ' 500 Internal Server Error', true, 500 );
+	        wp_die( 'На сайте произошла непредвиденная ошибка, повторите позже, или обратитесь к администратору' );
         }
 
 	    header( $protocol . ' 200 OK', true, 200 );
